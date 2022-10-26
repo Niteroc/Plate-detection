@@ -1,43 +1,39 @@
-import imutils
 import cv2
 import os
 
-image = cv2.imread('plaque.jpg')
-image = imutils.resize(image, width=300)
+for i in range(1,10):
 
-#to gray scale
-gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    image = cv2.imread('plaque'+ str(i) + '.jpg')
+    image = cv2.resize(image, (620,480))
+    image_nuance = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    image_bilaterale = cv2.bilateralFilter(image_nuance, 11, 17, 17)
+    image_contour = cv2.Canny(image_bilaterale, 100, 200)
 
-# apply noise reducing filter
-gray_image = cv2.bilateralFilter(gray_image, 11,17,17)
+    contours, _ = cv2.findContours(image_contour.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    contours_tries = sorted(contours, key=cv2.contourArea, reverse=True)[:30]
+    quadrilateres = []
 
-# apply canny border detection 
-canny_res = cv2.Canny(gray_image, 30, 200)
+    for c in contours_tries:
+        perimetre = cv2.arcLength(c, True)
+        polygone = cv2.approxPolyDP(c, 0.02 * perimetre, True)
+        cv2.drawContours(image_contour,[polygone], 0, (150), 3)
+        if len(polygone) == 4: 
+            quadrilateres.append(polygone)
+            break
 
-# find all the contours
-contours, _ = cv2.findContours(canny_res.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-img_test = image.copy()
-# sort and get the 5 most marked contour
-sorted_contours = sorted(contours, key=cv2.contourArea, reverse=True)[:100]
-c_sort = [];
+    image_contour_bis = image_contour.copy()
+    j = 1
 
-for c in sorted_contours:
-    perimeter = cv2.arcLength(c, True)
-    approx = cv2.approxPolyDP(c, 0.01 * perimeter, True)
-    cv2.drawContours(img_test,[approx], 0, (0), 3)
-    if len(approx) == 4: 
-        c_sort.append(approx)
-        break
+    for c in quadrilateres:
+        perimetre = cv2.arcLength(c, True)
+        polygone = cv2.approxPolyDP(c, 0.01 * perimetre, True)
+        cv2.drawContours(image_contour_bis,[polygone], 0, (255), 3)
+        x,y,w,h = cv2.boundingRect(c) 
+        plate_temp = image[y:y+h,x:x+w]
+        cv2.imwrite('temp_'+str(i)+ '_' +str(j)+'.png',plate_temp)
+        j = j + 1
 
-img_test_ = img_test.copy();
-
-for c in c_sort:
-    perimeter = cv2.arcLength(c, True)
-    approx = cv2.approxPolyDP(c, 0.01 * perimeter, True)
-    cv2.drawContours(img_test_,[approx], 0, (255), 3)
-    
-
-cv2.imshow("image with detected license plate", img_test)
-cv2.waitKey(0)
-cv2.imshow("image with detected license plate", img_test_)
-cv2.waitKey(0)
+    cv2.imshow("",image_contour)
+    cv2.waitKey(0)
+    cv2.imshow("",image_contour_bis)
+    cv2.waitKey(0)
