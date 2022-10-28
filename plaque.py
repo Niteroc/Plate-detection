@@ -3,7 +3,7 @@ import os
 
 for i in range(1,10):
 
-    image = cv2.imread('plaque'+ str(i) + '.jpg')
+    image = cv2.imread('plaque/plaque'+ str(i) + '.jpg')
     image = cv2.resize(image, (620,480))
     image_nuance = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     image_bilaterale = cv2.bilateralFilter(image_nuance, 11, 17, 17)
@@ -30,7 +30,7 @@ for i in range(1,10):
         cv2.drawContours(image_contour_bis,[polygone], 0, (255), 3)
         x,y,w,h = cv2.boundingRect(c) 
         plate_temp = image[y:y+h,x:x+w]
-        cv2.imwrite('temp_'+str(i)+ '_' +str(j)+'.png',plate_temp)
+        cv2.imwrite('output/temp_'+str(i)+ '_' +str(j)+'.png',plate_temp)
         j = j + 1
 
     cv2.imshow("",image_contour)
